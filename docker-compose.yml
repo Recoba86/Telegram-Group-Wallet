@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: telegram_wallet_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: telegram_wallet
+      POSTGRES_USER: wallet_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change_me_in_production}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wallet_user -d telegram_wallet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  bot:
+    build: .
+    container_name: telegram_wallet_bot
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://wallet_user:${DB_PASSWORD:-change_me_in_production}@db:5432/telegram_wallet
+      BOT_TOKEN: ${BOT_TOKEN}
+      ADMIN_IDS: ${ADMIN_IDS}
+      ADMIN_GROUP_ID: ${ADMIN_GROUP_ID}
+      WEB_PORT: 8080
+      WEB_JWT_SECRET: ${WEB_JWT_SECRET}
+      BASE_URL: ${BASE_URL:-http://localhost:8080}
+      BACKUP_PATH: /backups
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    volumes:
+      - backups:/backups
+    command: sh -c "npm run migrate && node dist/index.js"
+
+volumes:
+  postgres_data:
+    driver: local
+  backups:
+    driver: local

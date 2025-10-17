@@ -1,0 +1,69 @@
+{
+  "name": "telegram-group-wallet",
+  "version": "1.0.0",
+  "description": "Production-ready Telegram Bot with WebApp admin panel for virtual wallet management",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "migrate": "knex migrate:latest --knexfile src/db/knexfile.ts",
+    "migrate:rollback": "knex migrate:rollback --knexfile src/db/knexfile.ts",
+    "migrate:make": "knex migrate:make --knexfile src/db/knexfile.ts",
+    "seed": "knex seed:run --knexfile src/db/knexfile.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .ts",
+    "webapp:dev": "cd src/web/webapp && npm run dev",
+    "webapp:build": "cd src/web/webapp && npm run build"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "wallet",
+    "webapp",
+    "persian"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "telegraf": "^4.15.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "knex": "^3.1.0",
+    "pg": "^8.11.3",
+    "better-sqlite3": "^9.2.2",
+    "dotenv": "^16.3.1",
+    "express-rate-limit": "^7.1.5",
+    "node-cron": "^3.0.3",
+    "winston": "^3.11.0",
+    "date-fns": "^3.0.6",
+    "date-fns-jalali": "^3.0.0-0",
+    "uuid": "^9.0.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node-cron": "^3.0.11",
+    "@types/uuid": "^9.0.7",
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/jest": "^29.5.11",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

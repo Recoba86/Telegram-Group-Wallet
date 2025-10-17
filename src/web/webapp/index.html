@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت - کیف پول</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            direction: rtl;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-value { font-size: 2em; font-weight: bold; color: #667eea; }
+        .stat-label { color: #666; margin-top: 5px; }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .tab.active { background: #667eea; color: white; }
+        .content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover { background: #5568d3; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+        }
+        th { background: #f8f9fa; font-weight: bold; }
+        input, select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .form-group { margin: 15px 0; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .loading { text-align: center; padding: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎛 پنل مدیریت کیف پول</h1>
+            <p>خوش آمدید، مدیر</p>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalUsers">...</div>
+                <div class="stat-label">تعداد کاربران</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalBalance">...</div>
+                <div class="stat-label">موجودی کل (دلار)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pendingWithdrawals">...</div>
+                <div class="stat-label">برداشت‌های در انتظار</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeCodes">...</div>
+                <div class="stat-label">کدهای فعال</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('users')">👥 کاربران</button>
+            <button class="tab" onclick="showTab('codes')">🎟 کدها</button>
+            <button class="tab" onclick="showTab('withdrawals')">💸 برداشت‌ها</button>
+            <button class="tab" onclick="showTab('transactions')">📊 تراکنش‌ها</button>
+            <button class="tab" onclick="showTab('settings')">⚙️ تنظیمات</button>
+            <button class="tab" onclick="showTab('backup')">🗄 پشتیبان</button>
+        </div>
+
+        <div class="content" id="content">
+            <div class="loading">در حال بارگذاری...</div>
+        </div>
+    </div>
+
+    <script>
+        // این یک قالب ساده است. برای استفاده واقعی، از React/Vue استفاده کنید
+        const API_URL = '/api';
+        let token = '';
+
+        // Check Telegram WebApp
+        if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            
+            // Get init data for authentication
+            const initData = tg.initData;
+            const user = tg.initDataUnsafe.user;
+            
+            if (user) {
+                // Login with Telegram auth
+                fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        telegramId: user.id,
+                        initData: initData
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    token = data.token;
+                    loadStats();
+                    showTab('users');
+                });
+            }
+        }
+
+        async function api(endpoint, options = {}) {
+            const response = await fetch(`${API_URL}${endpoint}`, {
+                ...options,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+            return response.json();
+        }
+
+        async function loadStats() {
+            const [users, codes, withdrawals] = await Promise.all([
+                api('/users/stats'),
+                api('/codes/stats'),
+                api('/withdrawals/stats')
+            ]);
+            
+            document.getElementById('totalUsers').textContent = users.totalUsers;
+            document.getElementById('totalBalance').textContent = parseFloat(users.totalBalance).toFixed(2);
+            document.getElementById('pendingWithdrawals').textContent = withdrawals.pending;
+            document.getElementById('activeCodes').textContent = codes.activeCodes;
+        }
+
+        function showTab(tab) {
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Load content
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">در حال بارگذاری...</div>';
+            
+            switch(tab) {
+                case 'users':
+                    loadUsers();
+                    break;
+                case 'codes':
+                    loadCodes();
+                    break;
+                case 'withdrawals':
+                    loadWithdrawals();
+                    break;
+                case 'transactions':
+                    loadTransactions();
+                    break;
+                case 'settings':
+                    loadSettings();
+                    break;
+                case 'backup':
+                    loadBackup();
+                    break;
+            }
+        }
+
+        async function loadUsers() {
+            const data = await api('/users');
+            let html = '<h2>کاربران</h2>';
+            html += '<input type="text" placeholder="جستجو..." onchange="searchUsers(this.value)">';
+            html += '<table><thead><tr><th>نام</th><th>موجودی</th><th>تاریخ</th><th>عملیات</th></tr></thead><tbody>';
+            
+            data.users.forEach(user => {
+                html += `<tr>
+                    <td>${user.display_name}</td>
+                    <td>${parseFloat(user.balance).toFixed(2)} $</td>
+                    <td>${new Date(user.created_at).toLocaleDateString('fa-IR')}</td>
+                    <td>
+                        <button class="btn" onclick="viewUser(${user.id})">مشاهده</button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('content').innerHTML = html;
+        }
+
+        async function loadCodes() {
+            const data = await api('/codes');
+            let html = '<h2>کدهای هدیه</h2>';
+            html += '<button class="btn" onclick="createCode()">ایجاد کد جدید</button>';
+            html += '<table><thead><tr><th>کد</th><th>مبلغ</th><th>استفاده</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>';
+            
+            data.codes.forEach(code => {
+                html += `<tr>
+                    <td><code>${code.code}</code></td>
+                    <td>${parseFloat(code.amount).toFixed(2)} $</td>
+                    <td>${code.uses_count} / ${code.uses_allowed || '∞'}</td>
+                    <td>${code.is_active ? '✅ فعال' : '❌ غیرفعال'}</td>
+                    <td>
+                        <button class="btn" onclick="toggleCode(${code.id}, ${!code.is_active})">
+                            ${code.is_active ? 'غیرفعال' : 'فعال'}
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('content').innerHTML = html;
+        }
+
+        async function loadWithdrawals() {
+            const data = await api('/withdrawals?status=pending');
+            let html = '<h2>درخواست‌های برداشت</h2>';
+            html += '<table><thead><tr><th>کاربر</th><th>مبلغ</th><th>شبکه</th><th>آدرس</th><th>عملیات</th></tr></thead><tbody>';
+            
+            data.requests.forEach(req => {
+                html += `<tr>
+                    <td>User #${req.user_id}</td>
+                    <td>${parseFloat(req.amount).toFixed(2)} $</td>
+                    <td>${req.target_network}</td>
+                    <td><code>${req.target_address.substring(0, 20)}...</code></td>
+                    <td>
+                        <button class="btn" onclick="approveWithdraw(${req.id})">تایید</button>
+                        <button class="btn" onclick="rejectWithdraw(${req.id})">رد</button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('content').innerHTML = html;
+        }
+
+        // Additional functions would be implemented here
+        console.log('Admin Panel Loaded - این یک نمونه ساده است. برای پروژه واقعی از React/Vue استفاده کنید.');
+    </script>
+</body>
+</html>
