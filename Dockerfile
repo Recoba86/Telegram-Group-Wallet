@@ -22,6 +22,10 @@ COPY src/web/webapp ./src/web/webapp
 # Switch to non-root user
 USER node
 
+# Set environment variables for ts-node
+ENV TS_NODE_TRANSPILE_ONLY=true
+ENV TS_NODE_PROJECT=tsconfig.server.json
+
 # Expose web port
 EXPOSE 8080
 
