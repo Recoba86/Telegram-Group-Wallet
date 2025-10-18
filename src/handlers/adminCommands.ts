@@ -37,6 +37,7 @@ export async function adminCommand(ctx: Context) {
 
 ⚙️ <b>تنظیمات:</b>
 /admin_settings - مشاهده تنظیمات
+/admin_setsetting &lt;key&gt; &lt;value&gt; - تغییر تنظیمات
     `.trim();
 
     await ctx.reply(menu, { parse_mode: 'HTML' });
@@ -481,6 +482,86 @@ export async function adminSettingsCommand(ctx: Context) {
   } catch (error) {
     logger.error('Error in admin settings command:', error);
     await ctx.reply('❌ خطا در دریافت تنظیمات');
+  }
+}
+
+/**
+ * /admin_setsetting <key> <value> - change a system setting
+ */
+export async function adminSetSettingCommand(ctx: Context) {
+  try {
+    const text = ctx.message && 'text' in ctx.message ? ctx.message.text : '';
+    const parts = text.split(' ');
+
+    if (parts.length < 3) {
+      const helpMessage = `
+❌ فرمت: /admin_setsetting &lt;key&gt; &lt;value&gt;
+
+<b>کلیدهای مجاز:</b>
+• <code>DAILY_WITHDRAW_LIMIT</code> - حداکثر برداشت روزانه
+• <code>WITHDRAW_FEE_FIXED</code> - کارمزد ثابت (دلار)
+• <code>WITHDRAW_FEE_PERCENT</code> - کارمزد درصدی
+• <code>MIN_WITHDRAW_AMOUNT</code> - حداقل برداشت (دلار)
+• <code>REFERRAL_REWARD</code> - پاداش معرفی (دلار)
+
+<b>مثال‌ها:</b>
+<code>/admin_setsetting DAILY_WITHDRAW_LIMIT 5</code>
+<code>/admin_setsetting WITHDRAW_FEE_FIXED 1</code>
+<code>/admin_setsetting WITHDRAW_FEE_PERCENT 2.5</code>
+<code>/admin_setsetting MIN_WITHDRAW_AMOUNT 2</code>
+<code>/admin_setsetting REFERRAL_REWARD 0.5</code>
+      `.trim();
+      
+      await ctx.reply(helpMessage, { parse_mode: 'HTML' });
+      return;
+    }
+
+    const key = parts[1].toUpperCase();
+    const value = parts[2];
+
+    // Validate key
+    const allowedKeys = [
+      'DAILY_WITHDRAW_LIMIT',
+      'WITHDRAW_FEE_FIXED',
+      'WITHDRAW_FEE_PERCENT',
+      'MIN_WITHDRAW_AMOUNT',
+      'REFERRAL_REWARD',
+    ];
+
+    if (!allowedKeys.includes(key)) {
+      await ctx.reply(`❌ کلید نامعتبر است. کلیدهای مجاز:\n${allowedKeys.map(k => `• ${k}`).join('\n')}`);
+      return;
+    }
+
+    // Validate value (must be a number)
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 0) {
+      await ctx.reply('❌ مقدار باید یک عدد مثبت باشد');
+      return;
+    }
+
+    // Update setting
+    await settingsService.set(key, numValue);
+
+    const keyNames: Record<string, string> = {
+      'DAILY_WITHDRAW_LIMIT': 'حداکثر برداشت روزانه',
+      'WITHDRAW_FEE_FIXED': 'کارمزد ثابت',
+      'WITHDRAW_FEE_PERCENT': 'کارمزد درصدی',
+      'MIN_WITHDRAW_AMOUNT': 'حداقل برداشت',
+      'REFERRAL_REWARD': 'پاداش معرفی',
+    };
+
+    await ctx.reply(
+      `✅ تنظیمات با موفقیت تغییر کرد:\n\n` +
+      `⚙️ ${keyNames[key]}\n` +
+      `📊 مقدار جدید: ${numValue}\n\n` +
+      `برای مشاهده همه تنظیمات: /admin_settings`
+    );
+
+    logger.info(`Setting changed by admin ${ctx.from?.id}: ${key} = ${numValue}`);
+  } catch (error) {
+    logger.error('Error in admin set setting command:', error);
+    await ctx.reply('❌ خطا در تغییر تنظیمات: ' + (error instanceof Error ? error.message : ''));
   }
 }
 
