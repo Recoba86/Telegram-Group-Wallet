@@ -65,7 +65,7 @@ class WithdrawService {
   }): Promise<{ success: boolean; message: string; request?: WithdrawRequest }> {
     const fs = require('fs');
     try {
-      fs.appendFileSync('/app/logs/withdraw-debug.log', `\n=== WITHDRAW CREATE CALLED ===\n[${new Date().toISOString()}] User: ${data.userId}, Amount: ${data.amount}, Network: ${data.targetNetwork}\n`);
+      fs.appendFileSync('/tmp/withdraw-debug.log', `\n=== WITHDRAW CREATE CALLED ===\n[${new Date().toISOString()}] User: ${data.userId}, Amount: ${data.amount}, Network: ${data.targetNetwork}\n`);
       
       const db = getDatabase();
       
@@ -108,7 +108,7 @@ class WithdrawService {
       }
 
       // Reserve amount (debit immediately)
-      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] About to call walletService.debit\n`);
+      fs.appendFileSync('/tmp/withdraw-debug.log', `[${new Date().toISOString()}] About to call walletService.debit\n`);
       await walletService.debit(
         data.userId,
         data.amount,
@@ -119,10 +119,10 @@ class WithdrawService {
           fee,
         }
       );
-      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] Debit successful\n`);
+      fs.appendFileSync('/tmp/withdraw-debug.log', `[${new Date().toISOString()}] Debit successful\n`);
 
       // Create withdraw request
-      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] About to insert for user ${data.userId}, amount: ${data.amount}\n`);
+      fs.appendFileSync('/tmp/withdraw-debug.log', `[${new Date().toISOString()}] About to insert for user ${data.userId}, amount: ${data.amount}\n`);
       
       const results = await db<WithdrawRequest>('withdraw_requests')
         .insert({
@@ -139,15 +139,15 @@ class WithdrawService {
         })
         .returning('*');
       
-      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] Insert result: ${JSON.stringify(results)}\n`);
+      fs.appendFileSync('/tmp/withdraw-debug.log', `[${new Date().toISOString()}] Insert result: ${JSON.stringify(results)}\n`);
       const request = results[0];
       
       if (!request) {
-        fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] ERROR: No result returned!\n`);
+        fs.appendFileSync('/tmp/withdraw-debug.log', `[${new Date().toISOString()}] ERROR: No result returned!\n`);
         throw new Error('Failed to create withdrawal request - no result returned');
       }
       
-      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] Success! Request ID: ${request.id}\n`);
+      fs.appendFileSync('/tmp/withdraw-debug.log', `[${new Date().toISOString()}] Success! Request ID: ${request.id}\n`);
 
       logger.info(`Withdraw request created: ${request.id} by user ${data.userId}, amount: ${data.amount}$`);
       
@@ -160,10 +160,10 @@ class WithdrawService {
       };
     } catch (error) {
       const fs = require('fs');
-      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] CATCH ERROR: ${error}\n`);
+      fs.appendFileSync('/tmp/withdraw-debug.log', `[${new Date().toISOString()}] CATCH ERROR: ${error}\n`);
       if (error instanceof Error) {
-        fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] Error message: ${error.message}\n`);
-        fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] Error stack: ${error.stack}\n`);
+        fs.appendFileSync('/tmp/withdraw-debug.log', `[${new Date().toISOString()}] Error message: ${error.message}\n`);
+        fs.appendFileSync('/tmp/withdraw-debug.log', `[${new Date().toISOString()}] Error stack: ${error.stack}\n`);
       }
       
       logger.error('Error creating withdraw request:', error);
