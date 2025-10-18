@@ -117,7 +117,8 @@ class WithdrawService {
       );
 
       // Create withdraw request
-      const [request] = await db<WithdrawRequest>('withdraw_requests')
+      console.log('About to insert withdrawal request for user:', data.userId);
+      const results = await db<WithdrawRequest>('withdraw_requests')
         .insert({
           user_id: data.userId,
           amount: data.amount.toFixed(2),
@@ -131,6 +132,13 @@ class WithdrawService {
           created_at: new Date(),
         })
         .returning('*');
+      
+      console.log('Insert result:', results);
+      const request = results[0];
+      
+      if (!request) {
+        throw new Error('Failed to create withdrawal request - no result returned');
+      }
 
       logger.info(`Withdraw request created: ${request.id} by user ${data.userId}, amount: ${data.amount}$`);
       
