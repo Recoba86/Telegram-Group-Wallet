@@ -5,6 +5,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
+COPY tsconfig.server.json ./
 
 # Install ALL dependencies (including dev dependencies for ts-node)
 RUN npm install
@@ -28,5 +29,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:8080/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"
 
-# Run with ts-node directly (no build step)
-CMD ["npx", "ts-node", "src/index.ts"]
+# Run with ts-node in transpileOnly mode (skips type checking)
+CMD ["npx", "ts-node", "--transpile-only", "--project", "tsconfig.server.json", "src/index.ts"]
