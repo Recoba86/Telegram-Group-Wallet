@@ -19,6 +19,7 @@ import {
   adminUsersCommand,
   adminUserCommand,
   adminStatsCommand,
+  adminSettingsCommand,
   adminAddBalanceCommand,
 } from './handlers/adminCommands';
 import { membershipGuard } from './middlewares/membershipGuard';
@@ -78,6 +79,7 @@ export async function createBot(): Promise<Telegraf> {
   bot.command('admin_users', adminGuard, adminUsersCommand);
   bot.command('admin_user', adminGuard, adminUserCommand);
   bot.command('admin_stats', adminGuard, adminStatsCommand);
+  bot.command('admin_settings', adminGuard, adminSettingsCommand);
   bot.command('admin_addbalance', adminGuard, adminAddBalanceCommand);
   
   // Temporary command to get chat ID (for admin group setup)

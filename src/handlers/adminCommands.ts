@@ -424,6 +424,55 @@ export async function adminStatsCommand(ctx: Context) {
 }
 
 /**
+ * /admin_settings - show system settings
+ */
+export async function adminSettingsCommand(ctx: Context) {
+  try {
+    const [
+      dailyLimit,
+      feeFixed,
+      feePercent,
+      minWithdraw,
+      referralReward,
+    ] = await Promise.all([
+      settingsService.get('DAILY_WITHDRAW_LIMIT', 2),
+      settingsService.get('WITHDRAW_FEE_FIXED', 0.10),
+      settingsService.get('WITHDRAW_FEE_PERCENT', 2.5),
+      settingsService.get('MIN_WITHDRAW_AMOUNT', 0.10),
+      settingsService.get('REFERRAL_REWARD', 0.25),
+    ]);
+
+    const message = `
+⚙️ <b>تنظیمات سیستم</b>
+
+💸 <b>برداشت:</b>
+• حداکثر روزانه: ${dailyLimit} درخواست
+• کارمزد ثابت: ${feeFixed}$
+• کارمزد درصدی: ${feePercent}%
+• حداقل برداشت: ${minWithdraw}$
+
+🎁 <b>پاداش معرفی:</b>
+• پاداش هر معرفی: ${referralReward}$
+
+<b>💡 نکته:</b> برای تغییر تنظیمات از دیتابیس استفاده کنید:
+<code>UPDATE settings SET value = 'مقدار' WHERE key = 'کلید';</code>
+
+<b>کلیدهای موجود:</b>
+• DAILY_WITHDRAW_LIMIT
+• WITHDRAW_FEE_FIXED
+• WITHDRAW_FEE_PERCENT
+• MIN_WITHDRAW_AMOUNT
+• REFERRAL_REWARD
+    `.trim();
+
+    await ctx.reply(message, { parse_mode: 'HTML' });
+  } catch (error) {
+    logger.error('Error in admin settings command:', error);
+    await ctx.reply('❌ خطا در دریافت تنظیمات');
+  }
+}
+
+/**
  * /admin_addbalance <user_id> <amount> - add balance to user
  */
 export async function adminAddBalanceCommand(ctx: Context) {
