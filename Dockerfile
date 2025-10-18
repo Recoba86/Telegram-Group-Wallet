@@ -27,8 +27,8 @@ RUN npm ci --only=production
 # Copy built files
 COPY --from=builder /app/dist ./dist
 
-# Copy webapp build if exists
-COPY src/web/webapp/dist ./dist/web/webapp/dist 2>/dev/null || true
+# Copy webapp static files
+COPY src/web/webapp ./dist/web/webapp
 
 # Create backup directory
 RUN mkdir -p /backups && chown node:node /backups
