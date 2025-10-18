@@ -30,7 +30,7 @@ export async function adminCommand(ctx: Context) {
 👥 <b>مدیریت کاربران:</b>
 /admin_users - آمار کاربران
 /admin_user &lt;user_id&gt; - اطلاعات کاربر
-/admin_addbalance &lt;user_id&gt; &lt;amount&gt; - افزایش موجودی
+/admin_addbalance &lt;user_id&gt; &lt;amount&gt; - تغییر موجودی (+ یا -)
 
 📊 <b>آمار:</b>
 /admin_stats - آمار کلی سیستم
@@ -432,7 +432,7 @@ export async function adminAddBalanceCommand(ctx: Context) {
     const parts = text.split(' ');
 
     if (parts.length < 3) {
-      await ctx.reply('❌ فرمت: /admin_addbalance &lt;user_id&gt; &lt;amount&gt;', { parse_mode: 'HTML' });
+      await ctx.reply('❌ فرمت: /admin_addbalance &lt;user_id&gt; &lt;amount&gt;\n\nمثال:\n/admin_addbalance 1 100 (افزایش)\n/admin_addbalance 1 -50 (کاهش)', { parse_mode: 'HTML' });
       return;
     }
 
@@ -444,8 +444,8 @@ export async function adminAddBalanceCommand(ctx: Context) {
       return;
     }
 
-    if (isNaN(amount) || amount <= 0) {
-      await ctx.reply('❌ مبلغ نامعتبر است');
+    if (isNaN(amount) || amount === 0) {
+      await ctx.reply('❌ مبلغ نامعتبر است (نمی‌تواند صفر باشد)');
       return;
     }
 
@@ -455,12 +455,21 @@ export async function adminAddBalanceCommand(ctx: Context) {
       return;
     }
 
-    await walletService.credit(userId, amount, TransactionType.ADMIN_ADJUST, {
-      admin_id: ctx.from!.id,
-      reason: 'Manual balance adjustment by admin',
-    });
-
-    await ctx.reply(`✅ مبلغ ${amount}$ به حساب ${user.display_name} (ID: ${userId}) اضافه شد.`);
+    // For negative amounts, use debit instead of credit
+    if (amount < 0) {
+      const absAmount = Math.abs(amount);
+      await walletService.debit(userId, absAmount, TransactionType.ADMIN_ADJUST, {
+        admin_id: ctx.from!.id,
+        reason: 'Manual balance adjustment by admin (decrease)',
+      });
+      await ctx.reply(`✅ مبلغ ${absAmount}$ از حساب ${user.display_name} (ID: ${userId}) کسر شد.`);
+    } else {
+      await walletService.credit(userId, amount, TransactionType.ADMIN_ADJUST, {
+        admin_id: ctx.from!.id,
+        reason: 'Manual balance adjustment by admin (increase)',
+      });
+      await ctx.reply(`✅ مبلغ ${amount}$ به حساب ${user.display_name} (ID: ${userId}) اضافه شد.`);
+    }
   } catch (error) {
     logger.error('Error in admin add balance command:', error);
     await ctx.reply('❌ خطا در افزایش موجودی: ' + (error instanceof Error ? error.message : ''));
