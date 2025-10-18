@@ -136,33 +136,21 @@ export async function claimCommand(ctx: Context) {
  * /withdraw command handler
  */
 export async function withdrawCommand(ctx: Context) {
-  console.log('===== WITHDRAW COMMAND RECEIVED =====');
-  
   try {
-    if (!ctx.from) {
-      console.log('No ctx.from');
-      return;
-    }
+    if (!ctx.from) return;
 
-    console.log('User telegram ID:', ctx.from.id);
     const user = await usersService.findByTelegramId(ctx.from.id);
     
     if (!user) {
-      console.log('User not found in DB');
       await ctx.reply('لطفا ابتدا /start را بزنید');
       return;
     }
-    console.log('User found:', user.id, user.display_name);
 
     // Extract parameters
     const text = ctx.message && 'text' in ctx.message ? ctx.message.text : '';
-    console.log('Message text:', text);
-    
     const parts = text.split(' ').filter(p => p.trim());
-    console.log('Parts:', parts);
     
     if (parts.length < 3) {
-      console.log('Not enough parameters');
       await ctx.reply(messages.withdrawPrompt(), { parse_mode: 'HTML' });
       return;
     }
@@ -170,43 +158,33 @@ export async function withdrawCommand(ctx: Context) {
     const amount = parseFloat(parts[1]);
     const address = parts[2];
     const network = 'TON'; // Always use TON network
-    
-    console.log('Parsed - Amount:', amount, 'Address:', address, 'Network:', network);
 
     if (isNaN(amount) || amount <= 0) {
-      console.log('Invalid amount');
       await ctx.reply('❌ مبلغ نامعتبر است');
       return;
     }
 
     // Validate TON address (basic check)
     if (!address || address.length < 48) {
-      console.log('Invalid TON address');
       await ctx.reply('❌ آدرس TON نامعتبر است\n\nآدرس باید 48 کاراکتر یا بیشتر باشد');
       return;
     }
 
     // Show fee info
-    console.log('Calculating fee...');
     const feeInfo = await withdrawService.calculateFee(amount);
-    console.log('Fee info:', feeInfo);
     
     // Create withdraw request
-    console.log('Calling withdrawService.create()...');
     const result = await withdrawService.create({
       userId: user.id,
       amount,
       targetNetwork: network,
       targetAddress: address,
     });
-    console.log('Result from service:', JSON.stringify(result, null, 2));
 
     if (result.success && result.request) {
-      console.log('SUCCESS - Sending success message');
       await ctx.reply(result.message, { parse_mode: 'HTML' });
       
       // Notify admins
-      console.log('Notifying admins...');
       await notificationService.notifyNewWithdrawRequest({
         requestId: result.request.id,
         userId: user.id,
@@ -216,26 +194,13 @@ export async function withdrawCommand(ctx: Context) {
         network,
         address,
       });
-      console.log('Admin notification sent');
     } else {
-      console.log('FAILED - Sending error message');
       await ctx.reply(result.message, { parse_mode: 'HTML' });
     }
   } catch (error) {
-    console.log('===== EXCEPTION IN WITHDRAW COMMAND =====');
-    console.log('Error:', error);
-    console.log('Error type:', typeof error);
-    console.log('Error message:', error instanceof Error ? error.message : 'Unknown');
-    console.log('Error stack:', error instanceof Error ? error.stack : 'No stack');
-    
     logger.error('Error in withdraw command:', error);
-    if (error instanceof Error) {
-      logger.error('Error details:', { message: error.message, stack: error.stack });
-    }
     await ctx.reply(messages.error());
   }
-  
-  console.log('===== WITHDRAW COMMAND END =====');
 }
 
 /**

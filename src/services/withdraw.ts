@@ -63,19 +63,13 @@ class WithdrawService {
     targetNetwork: string;
     targetAddress: string;
   }): Promise<{ success: boolean; message: string; request?: WithdrawRequest }> {
-    console.log('===== WITHDRAW CREATE START =====');
-    console.log('Data:', JSON.stringify(data, null, 2));
-    
     try {
       const db = getDatabase();
       
       // Validate minimum amount
-      console.log('Step 1: Validating minimum amount...');
       const minAmount = await settingsService.get<number>('MIN_WITHDRAW_AMOUNT', CONFIG.MIN_WITHDRAW_AMOUNT);
-      console.log('Min amount:', minAmount);
       
       if (data.amount < minAmount) {
-        console.log('FAIL: Amount too small');
         return {
           success: false,
           message: `حداقل مبلغ برداشت ${minAmount}$ است ⚠️`,
@@ -83,12 +77,9 @@ class WithdrawService {
       }
 
       // Check daily limit
-      console.log('Step 2: Checking daily limit...');
       const limitCheck = await this.canWithdraw(data.userId);
-      console.log('Limit check result:', limitCheck);
       
       if (!limitCheck.can) {
-        console.log('FAIL: Daily limit exceeded');
         return {
           success: false,
           message: limitCheck.reason || 'محدودیت برداشت روزانه',
@@ -96,29 +87,22 @@ class WithdrawService {
       }
 
       // Calculate fee
-      console.log('Step 3: Calculating fee...');
       const { fee } = await this.calculateFee(data.amount);
-      console.log('Fee calculated:', fee);
 
-      // Check user balance - USE RAW SQL
-      console.log('Step 4: Checking user balance...');
+      // Check user balance
       const userResult = await db.raw(
         'SELECT id, balance FROM users WHERE id = ?',
         [data.userId]
       );
       const user = userResult.rows[0];
-      console.log('User balance:', user);
 
       if (!user) {
-        console.log('FAIL: User not found');
         return { success: false, message: 'کاربر یافت نشد' };
       }
 
       const balance = parseFloat(user.balance);
-      console.log('Balance parsed:', balance);
       
       if (balance < data.amount) {
-        console.log('FAIL: Insufficient balance');
         return {
           success: false,
           message: `موجودی شما کافی نیست. موجودی فعلی: ${balance}$ 💰`,
@@ -126,7 +110,6 @@ class WithdrawService {
       }
 
       // Reserve amount (debit immediately)
-      console.log('Step 5: Creating withdraw_reserve transaction...');
       await walletService.debit(
         data.userId,
         data.amount,
@@ -137,10 +120,8 @@ class WithdrawService {
           fee,
         }
       );
-      console.log('Debit successful');
 
-      // Create withdraw request - USE RAW SQL
-      console.log('Step 6: Inserting withdraw_request...');
+      // Create withdraw request
       const insertResult = await db.raw(
         `INSERT INTO withdraw_requests 
          (user_id, amount, fee_applied, target_network, target_address, status)
@@ -155,16 +136,13 @@ class WithdrawService {
         ]
       );
       
-      console.log('Insert result:', JSON.stringify(insertResult, null, 2));
       const request = insertResult.rows[0];
-      console.log('Request created:', request);
       
       if (!request) {
-        console.log('FAIL: No request returned from insert');
         throw new Error('Failed to create withdrawal request - no result returned');
       }
 
-      console.log(`SUCCESS: Withdraw request created with ID: ${request.id}`);
+      logger.info(`Withdraw request created: ${request.id} by user ${data.userId}, amount: ${data.amount}$`);
       
       const netAmount = data.amount - fee;
       
@@ -174,11 +152,6 @@ class WithdrawService {
         request,
       };
     } catch (error) {
-      console.log('===== ERROR IN WITHDRAW CREATE =====');
-      console.log('Error:', error);
-      console.log('Error message:', error instanceof Error ? error.message : 'Unknown');
-      console.log('Error stack:', error instanceof Error ? error.stack : 'No stack');
-      
       logger.error('Error creating withdraw request:', error);
       
       if (error instanceof Error) {
