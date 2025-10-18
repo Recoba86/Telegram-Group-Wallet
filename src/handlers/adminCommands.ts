@@ -454,15 +454,27 @@ export async function adminSettingsCommand(ctx: Context) {
 🎁 <b>پاداش معرفی:</b>
 • پاداش هر معرفی: ${referralReward}$
 
-<b>💡 نکته:</b> برای تغییر تنظیمات از دیتابیس استفاده کنید:
-<code>UPDATE settings SET value = 'مقدار' WHERE key = 'کلید';</code>
+━━━━━━━━━━━━━━━━━━
+<b>� نحوه تغییر تنظیمات:</b>
 
-<b>کلیدهای موجود:</b>
-• DAILY_WITHDRAW_LIMIT
-• WITHDRAW_FEE_FIXED
-• WITHDRAW_FEE_PERCENT
-• MIN_WITHDRAW_AMOUNT
-• REFERRAL_REWARD
+برای تغییر، دستور SQL زیر را در دیتابیس اجرا کنید:
+
+<b>مثال 1:</b> تغییر حداکثر برداشت روزانه به 5:
+<code>UPDATE settings SET value = '5' WHERE key = 'DAILY_WITHDRAW_LIMIT';</code>
+
+<b>مثال 2:</b> تغییر کارمزد ثابت به 1 دلار:
+<code>UPDATE settings SET value = '1' WHERE key = 'WITHDRAW_FEE_FIXED';</code>
+
+<b>مثال 3:</b> تغییر کارمزد درصدی به 5%:
+<code>UPDATE settings SET value = '5' WHERE key = 'WITHDRAW_FEE_PERCENT';</code>
+
+<b>مثال 4:</b> تغییر حداقل برداشت به 2 دلار:
+<code>UPDATE settings SET value = '2' WHERE key = 'MIN_WITHDRAW_AMOUNT';</code>
+
+<b>مثال 5:</b> تغییر پاداش معرفی به 0.5 دلار:
+<code>UPDATE settings SET value = '0.5' WHERE key = 'REFERRAL_REWARD';</code>
+
+<b>⚠️ نکته:</b> تنظیمات بلافاصله اعمال می‌شوند و نیاز به ریستارت بات نیست.
     `.trim();
 
     await ctx.reply(message, { parse_mode: 'HTML' });
