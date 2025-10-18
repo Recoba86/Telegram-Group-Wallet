@@ -143,12 +143,18 @@ class WithdrawService {
       };
     } catch (error) {
       logger.error('Error creating withdraw request:', error);
+      console.error('WITHDRAW ERROR:', error); // Add console.error for debugging
       
-      if (error instanceof Error && error.message === 'Insufficient balance') {
-        return {
-          success: false,
-          message: 'موجودی شما کافی نیست 💰',
-        };
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        
+        if (error.message === 'Insufficient balance') {
+          return {
+            success: false,
+            message: 'موجودی شما کافی نیست 💰',
+          };
+        }
       }
       
       return {
