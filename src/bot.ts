@@ -8,7 +8,18 @@ import {
   historyCommand,
   referralCommand,
 } from './handlers/commands';
+import {
+  adminCommand,
+  adminWithdrawalsCommand,
+  adminApproveCommand,
+  adminRejectCommand,
+  adminPaidCommand,
+  adminCreateCodeCommand,
+  adminStatsCommand,
+  adminAddBalanceCommand,
+} from './handlers/adminCommands';
 import { membershipGuard } from './middlewares/membershipGuard';
+import { adminGuard } from './middlewares/adminGuard';
 import { createRateLimiter } from './middlewares/rateLimit';
 import notificationService from './services/notifications';
 import settingsService from './services/settings';
@@ -45,13 +56,23 @@ export async function createBot(): Promise<Telegraf> {
     return createRateLimiter(maxRequests, windowMs, 'withdraw')(ctx, next);
   };
 
-  // Commands
+  // User Commands
   bot.command('start', startCommand);
   bot.command('balance', balanceCommand);
   bot.command('claim', membershipGuard, claimRateLimit, claimCommand);
   bot.command('withdraw', membershipGuard, withdrawRateLimit, withdrawCommand);
   bot.command('history', historyCommand);
   bot.command('referral', referralCommand);
+  
+  // Admin Commands
+  bot.command('admin', adminGuard, adminCommand);
+  bot.command('admin_withdrawals', adminGuard, adminWithdrawalsCommand);
+  bot.command('admin_approve', adminGuard, adminApproveCommand);
+  bot.command('admin_reject', adminGuard, adminRejectCommand);
+  bot.command('admin_paid', adminGuard, adminPaidCommand);
+  bot.command('admin_createcode', adminGuard, adminCreateCodeCommand);
+  bot.command('admin_stats', adminGuard, adminStatsCommand);
+  bot.command('admin_addbalance', adminGuard, adminAddBalanceCommand);
   
   // Temporary command to get chat ID (for admin group setup)
   bot.command('chatid', (ctx) => {
