@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { Telegraf } from 'telegraf';
+import fs from 'fs';
+import path from 'path';
 import { CONFIG } from '../config';
 import { loginHandler } from './auth';
 import usersRouter from './routes/users';
@@ -81,12 +83,27 @@ export function createWebServer(bot: Telegraf): express.Application {
   }
 
   // Serve static files from webapp (if built)
-  app.use(express.static('dist/web/webapp/dist'));
-
-  // SPA fallback
-  app.get('*', (req, res) => {
-    res.sendFile('dist/web/webapp/dist/index.html', { root: process.cwd() });
-  });
+  // Only serve webapp if it exists
+  const webappPath = path.join(process.cwd(), 'dist/web/webapp/dist');
+  
+  if (fs.existsSync(webappPath)) {
+    app.use(express.static(webappPath));
+    
+    // SPA fallback
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(webappPath, 'index.html'));
+    });
+  } else {
+    logger.warn('Webapp not built. Admin panel unavailable. Build it with: cd src/web/webapp && npm run build');
+    
+    // Fallback route
+    app.get('*', (req, res) => {
+      res.status(404).json({ 
+        error: 'Admin panel not available',
+        message: 'Webapp has not been built yet'
+      });
+    });
+  }
 
   return app;
 }
