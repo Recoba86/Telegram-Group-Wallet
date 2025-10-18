@@ -33,7 +33,7 @@ export async function startCommand(ctx: Context) {
       // Create new user
       user = await usersService.create({
         telegramId,
-        username,
+        username: username || undefined,
         displayName,
         referredBy: referralCode,
       });
