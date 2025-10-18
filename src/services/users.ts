@@ -169,6 +169,20 @@ class UsersService {
       throw error;
     }
   }
+
+  async getRecentUsers(limit: number = 10): Promise<User[]> {
+    try {
+      const db = getDatabase();
+      const users = await db<User>('users')
+        .orderBy('created_at', 'desc')
+        .limit(limit);
+      
+      return users;
+    } catch (error) {
+      logger.error('Error getting recent users:', error);
+      throw error;
+    }
+  }
 }
 
 export default new UsersService();

@@ -284,6 +284,102 @@ export async function adminCodesCommand(ctx: Context) {
 }
 
 /**
+ * /admin_users - show user statistics
+ */
+export async function adminUsersCommand(ctx: Context) {
+  try {
+    const stats = await usersService.getStats();
+    const recentUsers = await usersService.getRecentUsers(10);
+
+    let message = `👥 <b>آمار کاربران</b>\n\n`;
+    message += `📊 کل کاربران: ${stats.totalUsers}\n`;
+    message += `💰 موجودی کل: ${parseFloat(stats.totalBalance).toFixed(2)}$\n`;
+    message += `💵 میانگین موجودی: ${(parseFloat(stats.totalBalance) / stats.totalUsers).toFixed(2)}$\n\n`;
+    
+    message += `👤 <b>آخرین کاربران:</b>\n\n`;
+    
+    for (const user of recentUsers) {
+      message += `━━━━━━━━━━━━━━━\n`;
+      message += `🆔 ID: ${user.id}\n`;
+      message += `👤 نام: ${user.display_name}\n`;
+      message += `💰 موجودی: ${user.balance}$\n`;
+      message += `📅 عضویت: ${new Date(user.created_at).toLocaleString('fa-IR')}\n`;
+      message += `\n`;
+    }
+
+    message += `\nبرای مشاهده جزئیات:\n/admin_user &lt;user_id&gt;`;
+
+    await ctx.reply(message, { parse_mode: 'HTML' });
+  } catch (error) {
+    logger.error('Error in admin users command:', error);
+    await ctx.reply('❌ خطا در دریافت آمار کاربران');
+  }
+}
+
+/**
+ * /admin_user <user_id> - show user details
+ */
+export async function adminUserCommand(ctx: Context) {
+  try {
+    const text = ctx.message && 'text' in ctx.message ? ctx.message.text : '';
+    const parts = text.split(' ');
+
+    if (parts.length < 2) {
+      await ctx.reply('❌ فرمت: /admin_user &lt;user_id&gt;', { parse_mode: 'HTML' });
+      return;
+    }
+
+    const userId = parseInt(parts[1]);
+    if (isNaN(userId)) {
+      await ctx.reply('❌ شناسه کاربر نامعتبر است');
+      return;
+    }
+
+    const user = await usersService.findById(userId);
+    if (!user) {
+      await ctx.reply('❌ کاربر یافت نشد');
+      return;
+    }
+
+    // Get user's withdrawal requests
+    const { requests: withdrawals } = await withdrawService.getUserRequests(userId, 1, 5);
+    
+    let message = `👤 <b>اطلاعات کاربر</b>\n\n`;
+    message += `🆔 ID: ${user.id}\n`;
+    message += `📱 Telegram ID: <code>${user.telegram_id}</code>\n`;
+    message += `👤 نام: ${user.display_name}\n`;
+    if (user.username) {
+      message += `🔗 Username: @${user.username}\n`;
+    }
+    message += `💰 موجودی: ${user.balance}$\n`;
+    message += `🎟 کد معرف: <code>${user.referral_code}</code>\n`;
+    message += `📅 عضویت: ${new Date(user.created_at).toLocaleString('fa-IR')}\n\n`;
+    
+    if (withdrawals.length > 0) {
+      message += `💸 <b>آخرین برداشت‌ها:</b>\n\n`;
+      for (const w of withdrawals) {
+        const statusEmoji = {
+          pending: '⏳',
+          approved: '✅',
+          rejected: '❌',
+          paid: '💚'
+        }[w.status] || '❓';
+        
+        message += `${statusEmoji} #${w.id} - ${w.amount}$ (${w.status})\n`;
+      }
+    }
+
+    message += `\n<b>عملیات:</b>\n`;
+    message += `/admin_addbalance ${userId} &lt;amount&gt; - افزایش موجودی`;
+
+    await ctx.reply(message, { parse_mode: 'HTML' });
+  } catch (error) {
+    logger.error('Error in admin user command:', error);
+    await ctx.reply('❌ خطا در دریافت اطلاعات کاربر: ' + (error instanceof Error ? error.message : ''));
+  }
+}
+
+/**
  * /admin_stats - show system statistics
  */
 export async function adminStatsCommand(ctx: Context) {

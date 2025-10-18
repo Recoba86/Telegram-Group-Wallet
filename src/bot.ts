@@ -16,6 +16,8 @@ import {
   adminPaidCommand,
   adminCreateCodeCommand,
   adminCodesCommand,
+  adminUsersCommand,
+  adminUserCommand,
   adminStatsCommand,
   adminAddBalanceCommand,
 } from './handlers/adminCommands';
@@ -73,6 +75,8 @@ export async function createBot(): Promise<Telegraf> {
   bot.command('admin_paid', adminGuard, adminPaidCommand);
   bot.command('admin_createcode', adminGuard, adminCreateCodeCommand);
   bot.command('admin_codes', adminGuard, adminCodesCommand);
+  bot.command('admin_users', adminGuard, adminUsersCommand);
+  bot.command('admin_user', adminGuard, adminUserCommand);
   bot.command('admin_stats', adminGuard, adminStatsCommand);
   bot.command('admin_addbalance', adminGuard, adminAddBalanceCommand);
   
