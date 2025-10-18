@@ -4,6 +4,7 @@ import walletService from '../services/wallet';
 import codesService from '../services/codes';
 import withdrawService from '../services/withdraw';
 import referralService from '../services/referral';
+import settingsService from '../services/settings';
 import notificationService from '../services/notifications';
 import { messages } from './messages';
 import { CONFIG } from '../config';
@@ -245,7 +246,7 @@ export async function referralCommand(ctx: Context) {
     }
 
     const stats = await referralService.getUserStats(user.id);
-    const rewardAmount = CONFIG.REFERRAL_REWARD;
+    const rewardAmount = await settingsService.get<number>('REFERRAL_REWARD', CONFIG.REFERRAL_REWARD);
 
     await ctx.reply(
       messages.referralInfo(
