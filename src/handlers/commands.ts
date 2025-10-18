@@ -1,4 +1,5 @@
 import { Context } from 'telegraf';
+import * as fs from 'fs';
 import usersService from '../services/users';
 import walletService from '../services/wallet';
 import codesService from '../services/codes';
@@ -136,7 +137,6 @@ export async function claimCommand(ctx: Context) {
  * /withdraw command handler
  */
 export async function withdrawCommand(ctx: Context) {
-  const fs = require('fs');
   try {
     fs.appendFileSync('/tmp/withdraw-debug.log', `\n=== WITHDRAW COMMAND CALLED ===\n[${new Date().toISOString()}] From: ${ctx.from?.id}\n`);
     

@@ -1,5 +1,6 @@
 import { getDatabase } from '../db';
 import { WithdrawRequest, WithdrawStatus, User, TransactionType } from '../db';
+import * as fs from 'fs';
 import walletService from './wallet';
 import settingsService from './settings';
 import logger from './logger';
@@ -63,7 +64,6 @@ class WithdrawService {
     targetNetwork: string;
     targetAddress: string;
   }): Promise<{ success: boolean; message: string; request?: WithdrawRequest }> {
-    const fs = require('fs');
     try {
       fs.appendFileSync('/tmp/withdraw-debug.log', `\n=== WITHDRAW CREATE CALLED ===\n[${new Date().toISOString()}] User: ${data.userId}, Amount: ${data.amount}, Network: ${data.targetNetwork}\n`);
       
@@ -159,7 +159,6 @@ class WithdrawService {
         request,
       };
     } catch (error) {
-      const fs = require('fs');
       fs.appendFileSync('/tmp/withdraw-debug.log', `[${new Date().toISOString()}] CATCH ERROR: ${error}\n`);
       if (error instanceof Error) {
         fs.appendFileSync('/tmp/withdraw-debug.log', `[${new Date().toISOString()}] Error message: ${error.message}\n`);
