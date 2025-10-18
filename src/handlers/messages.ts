@@ -3,22 +3,24 @@ export const messages = {
   welcome: (firstName: string, referralCode: string, baseUrl: string) => `
 سلام ${firstName} عزیز! 👋
 
-به ربات کیف پول ما خوش اومدی! 💰
+به ربات کیف پول TON ما خوش اومدی! �
 
 🔹 موجودی خودت رو چک کن
 🔹 کدای هدیه رو استفاده کن
-🔹 برداشت آسان و سریع
+🔹 برداشت آسان به شبکه TON
 🔹 دوستاتو دعوت کن و جایزه بگیر
 
 دستورات:
 /balance - مشاهده موجودی
 /claim - استفاده از کد هدیه
-/withdraw - برداشت وجه
+/withdraw - برداشت به TON
 /history - تاریخچه تراکنش‌ها
 /referral - لینک دعوت و پاداش
 
 🎁 کد معرفی شما: <code>${referralCode}</code>
 🔗 لینک دعوت: ${baseUrl}/ref/${referralCode}
+
+💎 این ربات فقط از شبکه TON پشتیبانی می‌کند
 
 برای مدیریت حساب، از پنل ادمین استفاده کنید:
 ${baseUrl}/admin
@@ -74,16 +76,14 @@ ${baseUrl}/admin
   withdrawPrompt: () => `
 💸 <b>برداشت وجه</b>
 
-برای شروع، مبلغ مورد نظرت رو وارد کن:
-/withdraw AMOUNT NETWORK ADDRESS
+برای برداشت TON، دستور زیر را ارسال کنید:
+/withdraw AMOUNT TON_ADDRESS
 
 مثال:
-/withdraw 10.50 TRC20 TXxxx...
+/withdraw 10.50 UQBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-شبکه‌های پشتیبانی شده:
-• TRC20 (Tron)
-• BEP20 (BSC)
-• ERC20 (Ethereum)
+⚠️ توجه: فقط شبکه TON پشتیبانی می‌شود
+🔹 آدرس باید 48 کاراکتر یا بیشتر باشد
   `.trim(),
 
   withdrawFeeInfo: (amount: number, fee: number, netAmount: number) => `

@@ -149,17 +149,23 @@ export async function withdrawCommand(ctx: Context) {
     const text = ctx.message && 'text' in ctx.message ? ctx.message.text : '';
     const parts = text.split(' ').filter(p => p.trim());
     
-    if (parts.length < 4) {
+    if (parts.length < 3) {
       await ctx.reply(messages.withdrawPrompt(), { parse_mode: 'HTML' });
       return;
     }
 
     const amount = parseFloat(parts[1]);
-    const network = parts[2].toUpperCase();
-    const address = parts[3];
+    const address = parts[2];
+    const network = 'TON'; // Always use TON network
 
     if (isNaN(amount) || amount <= 0) {
       await ctx.reply('❌ مبلغ نامعتبر است');
+      return;
+    }
+
+    // Validate TON address (basic check)
+    if (!address || address.length < 48) {
+      await ctx.reply('❌ آدرس TON نامعتبر است\n\nآدرس باید 48 کاراکتر یا بیشتر باشد');
       return;
     }
 
