@@ -63,7 +63,10 @@ class WithdrawService {
     targetNetwork: string;
     targetAddress: string;
   }): Promise<{ success: boolean; message: string; request?: WithdrawRequest }> {
+    const fs = require('fs');
     try {
+      fs.appendFileSync('/app/logs/withdraw-debug.log', `\n=== WITHDRAW CREATE CALLED ===\n[${new Date().toISOString()}] User: ${data.userId}, Amount: ${data.amount}, Network: ${data.targetNetwork}\n`);
+      
       const db = getDatabase();
       
       // Validate minimum amount
@@ -105,6 +108,7 @@ class WithdrawService {
       }
 
       // Reserve amount (debit immediately)
+      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] About to call walletService.debit\n`);
       await walletService.debit(
         data.userId,
         data.amount,
@@ -115,10 +119,10 @@ class WithdrawService {
           fee,
         }
       );
+      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] Debit successful\n`);
 
       // Create withdraw request
-      const fs = require('fs');
-      fs.appendFileSync('/app/logs/withdraw-debug.log', `\n[${new Date().toISOString()}] About to insert for user ${data.userId}, amount: ${data.amount}\n`);
+      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] About to insert for user ${data.userId}, amount: ${data.amount}\n`);
       
       const results = await db<WithdrawRequest>('withdraw_requests')
         .insert({
