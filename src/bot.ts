@@ -52,6 +52,13 @@ export async function createBot(): Promise<Telegraf> {
   bot.command('withdraw', membershipGuard, withdrawRateLimit, withdrawCommand);
   bot.command('history', historyCommand);
   bot.command('referral', referralCommand);
+  
+  // Temporary command to get chat ID (for admin group setup)
+  bot.command('chatid', (ctx) => {
+    const chatId = ctx.chat.id;
+    const chatType = ctx.chat.type;
+    ctx.reply(`📋 Chat Info:\nID: <code>${chatId}</code>\nType: ${chatType}`, { parse_mode: 'HTML' });
+  });
 
   // Error handling
   bot.catch((err: any, ctx: any) => {
