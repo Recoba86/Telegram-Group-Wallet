@@ -10,18 +10,17 @@ const logger = winston.createLogger({
   ),
   defaultMeta: { service: 'telegram-wallet' },
   transports: [
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' }),
+    // Always log to console so we can see output in docker logs
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      ),
+    }),
+    // Use absolute paths for log files
+    new winston.transports.File({ filename: '/app/logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: '/app/logs/combined.log' }),
   ],
 });
-
-if (!CONFIG.IS_PRODUCTION) {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.simple()
-    ),
-  }));
-}
 
 export default logger;
