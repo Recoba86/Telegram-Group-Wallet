@@ -117,7 +117,9 @@ class WithdrawService {
       );
 
       // Create withdraw request
-      console.log('About to insert withdrawal request for user:', data.userId);
+      const fs = require('fs');
+      fs.appendFileSync('/app/logs/withdraw-debug.log', `\n[${new Date().toISOString()}] About to insert for user ${data.userId}, amount: ${data.amount}\n`);
+      
       const results = await db<WithdrawRequest>('withdraw_requests')
         .insert({
           user_id: data.userId,
@@ -133,12 +135,15 @@ class WithdrawService {
         })
         .returning('*');
       
-      console.log('Insert result:', results);
+      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] Insert result: ${JSON.stringify(results)}\n`);
       const request = results[0];
       
       if (!request) {
+        fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] ERROR: No result returned!\n`);
         throw new Error('Failed to create withdrawal request - no result returned');
       }
+      
+      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] Success! Request ID: ${request.id}\n`);
 
       logger.info(`Withdraw request created: ${request.id} by user ${data.userId}, amount: ${data.amount}$`);
       
@@ -150,13 +155,16 @@ class WithdrawService {
         request,
       };
     } catch (error) {
+      const fs = require('fs');
+      fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] CATCH ERROR: ${error}\n`);
+      if (error instanceof Error) {
+        fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] Error message: ${error.message}\n`);
+        fs.appendFileSync('/app/logs/withdraw-debug.log', `[${new Date().toISOString()}] Error stack: ${error.stack}\n`);
+      }
+      
       logger.error('Error creating withdraw request:', error);
-      console.error('WITHDRAW ERROR:', error); // Add console.error for debugging
       
       if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        
         if (error.message === 'Insufficient balance') {
           return {
             success: false,
