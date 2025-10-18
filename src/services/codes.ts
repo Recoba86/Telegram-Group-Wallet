@@ -249,6 +249,24 @@ class CodesService {
   }
 
   /**
+   * Get all active codes
+   */
+  async getActiveCodes(): Promise<RedeemCode[]> {
+    try {
+      const db = getDatabase();
+      const codes = await db<RedeemCode>('redeem_codes')
+        .where({ is_active: true })
+        .orderBy('created_at', 'desc')
+        .limit(20);
+      
+      return codes;
+    } catch (error) {
+      logger.error('Error getting active codes:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Activate/deactivate a code
    */
   async setActive(codeId: number, isActive: boolean): Promise<void> {

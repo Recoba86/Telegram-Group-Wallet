@@ -245,6 +245,45 @@ export async function adminCreateCodeCommand(ctx: Context) {
 }
 
 /**
+ * /admin_codes - list active redemption codes
+ */
+export async function adminCodesCommand(ctx: Context) {
+  try {
+    const codes = await codesService.getActiveCodes();
+
+    if (codes.length === 0) {
+      await ctx.reply('📋 هیچ کد فعالی وجود ندارد');
+      return;
+    }
+
+    let message = '🎟 <b>کدهای فعال:</b>\n\n';
+
+    for (const code of codes) {
+      const remaining = code.uses_allowed === 0 ? '∞' : (code.uses_allowed - code.uses_count).toString();
+      const expiryText = code.expires_at 
+        ? `\n📅 انقضا: ${new Date(code.expires_at).toLocaleString('fa-IR')}`
+        : '';
+      
+      message += `━━━━━━━━━━━━━━━\n`;
+      message += `🎟 کد: <code>${code.code}</code>\n`;
+      message += `💰 مبلغ: ${code.amount}$\n`;
+      message += `📊 استفاده: ${code.uses_count}/${code.uses_allowed === 0 ? '∞' : code.uses_allowed}\n`;
+      message += `✨ باقیمانده: ${remaining}\n`;
+      message += expiryText;
+      if (code.note) {
+        message += `\n📝 یادداشت: ${code.note}`;
+      }
+      message += `\n\n`;
+    }
+
+    await ctx.reply(message, { parse_mode: 'HTML' });
+  } catch (error) {
+    logger.error('Error in admin codes command:', error);
+    await ctx.reply('❌ خطا در دریافت لیست کدها');
+  }
+}
+
+/**
  * /admin_stats - show system statistics
  */
 export async function adminStatsCommand(ctx: Context) {
