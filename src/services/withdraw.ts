@@ -125,7 +125,7 @@ class WithdrawService {
           target_network: data.targetNetwork,
           target_address: data.targetAddress,
           status: WithdrawStatus.PENDING,
-          admin_note: null,
+          note: null,
           processed_at: null,
           processed_by: null,
           created_at: new Date(),
@@ -181,7 +181,7 @@ class WithdrawService {
         .where({ id: requestId })
         .update({
           status: WithdrawStatus.APPROVED,
-          admin_note: note || null,
+          note: note || null,
           processed_at: new Date(),
           processed_by: adminId,
         });
@@ -225,7 +225,7 @@ class WithdrawService {
         .where({ id: requestId })
         .update({
           status: WithdrawStatus.REJECTED,
-          admin_note: reason,
+          rejection_reason: reason,
           processed_at: new Date(),
           processed_by: adminId,
         });
