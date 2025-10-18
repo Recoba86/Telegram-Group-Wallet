@@ -174,12 +174,14 @@ export async function withdrawCommand(ctx: Context) {
     const feeInfo = await withdrawService.calculateFee(amount);
     
     // Create withdraw request
+    logger.info(`Creating withdrawal for user ${user.id}, amount: ${amount}`);
     const result = await withdrawService.create({
       userId: user.id,
       amount,
       targetNetwork: network,
       targetAddress: address,
     });
+    logger.info(`Withdrawal result: success=${result.success}, message=${result.message}`);
 
     if (result.success && result.request) {
       await ctx.reply(result.message, { parse_mode: 'HTML' });
@@ -199,6 +201,9 @@ export async function withdrawCommand(ctx: Context) {
     }
   } catch (error) {
     logger.error('Error in withdraw command:', error);
+    if (error instanceof Error) {
+      logger.error('Error details:', { message: error.message, stack: error.stack });
+    }
     await ctx.reply(messages.error());
   }
 }
