@@ -23,7 +23,7 @@ class ReferralService {
 
       // Check if this user was already referred
       const existingReferral = await db<Referral>('referrals')
-        .where({ referred_user_id: newUserId })
+        .where({ referred_id: newUserId })
         .first();
 
       if (existingReferral) {
@@ -48,10 +48,9 @@ class ReferralService {
       // Create referral record
       await db<Referral>('referrals')
         .insert({
-          referrer_user_id: referrer.id,
-          referred_user_id: newUserId,
-          reward: reward.toFixed(2),
-          created_at: new Date(),
+          referrer_id: referrer.id,
+          referred_id: newUserId,
+          reward_amount: reward.toFixed(2),
         });
 
       logger.info(`Referral processed: Referrer ${referrer.id} got ${reward}$ for referring user ${newUserId}`);
@@ -75,12 +74,12 @@ class ReferralService {
       
       const [countResult, rewardsResult] = await Promise.all([
         db<Referral>('referrals')
-          .where({ referrer_user_id: userId })
+          .where({ referrer_id: userId })
           .count('* as count')
           .first(),
         db<Referral>('referrals')
-          .where({ referrer_user_id: userId })
-          .sum('reward as total')
+          .where({ referrer_id: userId })
+          .sum('reward_amount as total')
           .first(),
       ]);
 
@@ -108,11 +107,11 @@ class ReferralService {
 
       const [countResult, referrals] = await Promise.all([
         db<Referral>('referrals')
-          .where({ referrer_user_id: userId })
+          .where({ referrer_id: userId })
           .count('* as count')
           .first(),
         db<Referral>('referrals')
-          .where({ referrer_user_id: userId })
+          .where({ referrer_id: userId })
           .orderBy('created_at', 'desc')
           .limit(limit)
           .offset(offset),
@@ -139,7 +138,7 @@ class ReferralService {
       
       const [countResult, rewardsResult] = await Promise.all([
         db<Referral>('referrals').count('* as count').first(),
-        db<Referral>('referrals').sum('reward as total').first(),
+        db<Referral>('referrals').sum('reward_amount as total').first(),
       ]);
 
       return {
