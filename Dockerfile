@@ -13,8 +13,8 @@ RUN npm install
 # Copy source code
 COPY src ./src
 
-# Create backup directory
-RUN mkdir -p /backups && chown node:node /backups
+# Create backup and logs directories with proper permissions
+RUN mkdir -p /backups /app/logs && chown -R node:node /backups /app/logs
 
 # Copy webapp static files
 COPY src/web/webapp ./src/web/webapp
