@@ -301,7 +301,10 @@ export async function adminUsersCommand(ctx: Context) {
     for (const user of recentUsers) {
       message += `━━━━━━━━━━━━━━━\n`;
       message += `🆔 ID: ${user.id}\n`;
-      message += `� Telegram ID: <code>${user.telegram_id}</code>\n`;
+      message += `📱 Telegram ID: <code>${user.telegram_id}</code>\n`;
+      if (user.username) {
+        message += `� ID Name: @${user.username}\n`;
+      }
       message += `�👤 نام: ${user.display_name}\n`;
       message += `💰 موجودی: ${user.balance}$\n`;
       message += `📅 عضویت: ${new Date(user.created_at).toLocaleString('fa-IR')}\n`;
