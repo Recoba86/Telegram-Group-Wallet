@@ -43,7 +43,8 @@
     "date-fns": "^3.0.6",
     "date-fns-jalali": "^3.0.0-0",
     "uuid": "^9.0.1",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
